@@ -4,4 +4,5 @@ from rest_framework import serializers
 class DatasetSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model=Dataset
-        fields = '__all__'
+        fields = ['date', 'installs','impressions', 'os', 'channel', 'country', \
+                  'clicks', 'spend', 'revenue', 'cpi']

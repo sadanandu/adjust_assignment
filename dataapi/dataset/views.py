@@ -4,15 +4,20 @@ import django_filters
 from .models import Dataset
 from rest_framework import viewsets
 from .serializers import DatasetSerializer
-
+from django.db.models import F
 
 # Create your views here.
 
 class DatasetFilter(django_filters.FilterSet):
-    date = django_filters.DateRangeFilter(field_name='date', lookup_expr='')
-    channel = django_filters.CharFilter(field_name='date', lookup_expr='')
-    country = django_filters.CharFilter(field_name='date', lookup_expr='')
-    os = django_filters.CharFilter(field_name='date', lookup_expr='')
+    date = django_filters.DateFilter(field_name='date')
+    before_date = django_filters.DateFilter(field_name='date', lookup_expr='lte')
+    after_date = django_filters.DateFilter(field_name='date', lookup_expr='gte')
+    channel_contains = django_filters.CharFilter(field_name='channel', lookup_expr='contains')
+    channel = django_filters.CharFilter(field_name='channel')
+    country = django_filters.CharFilter(field_name='country')
+    country_contains = django_filters.CharFilter(field_name='country', lookup_expr='contains')
+    os = django_filters.CharFilter(field_name='os')
+    os_contains = django_filters.CharFilter(field_name='os', lookup_expr='contains')
     impressions = django_filters.NumberFilter(field_name='impressions')
     min_impressions = django_filters.NumberFilter(field_name='impressions', lookup_expr='gte')
     max_impressions = django_filters.NumberFilter(field_name='impressions', lookup_expr='lte')
@@ -22,17 +27,37 @@ class DatasetFilter(django_filters.FilterSet):
     installs = django_filters.NumberFilter(field_name='installs')
     min_installs = django_filters.NumberFilter(field_name='installs', lookup_expr='gte')
     max_installs = django_filters.NumberFilter(field_name='installs', lookup_expr='lte')
-    spend = django_filters.NumericRangeFilter(field_name='spend')
+    spend = django_filters.NumberFilter(field_name='spend')
     min_spend = django_filters.NumberFilter(field_name='spend', lookup_expr='gte')
     max_spend = django_filters.NumberFilter(field_name='spend', lookup_expr='lte')
 
     revenue = django_filters.NumberFilter(field_name='revenue')
     min_revenue = django_filters.NumberFilter(field_name='revenue', lookup_expr='gte')
     max_revenue = django_filters.NumberFilter(field_name='revenue', lookup_expr='lte')
+
+    cpi = django_filters.NumberFilter(label='cpi', method='filter_cpi')
+    min_cpi = django_filters.NumberFilter(lookup_expr='gte', label='cpi', method='filter_min_cpi')
+    max_cpi = django_filters.NumberFilter(lookup_expr='lte', label='cpi', method='filter_max_cpi')
+
     class Meta:
         model = Dataset
         fields = ['date', 'installs','impressions', 'os', 'channel', 'country', \
-                  'clicks', 'spend', 'revenue']
+                  'clicks', 'spend', 'revenue', 'cpi']
+
+    def filter_cpi(self, queryset, name, value):
+        if value:
+            queryset = queryset.annotate(Dataset__cpi=F('spend')/F('installs')).filter(Dataset__cpi=value)
+        return queryset
+
+    def filter_min_cpi(self, queryset, name, value):
+        if value:
+            queryset = queryset.annotate(Dataset__cpi=F('spend')/F('installs')).filter(Dataset__cpi__gte=value)
+        return queryset
+
+    def filter_max_cpi(self, queryset, name, value):
+        if value:
+            queryset = queryset.annotate(Dataset__cpi=F('spend')/F('installs')).filter(Dataset__cpi__lte=value)
+        return queryset
 
 
 class DatasetViewSet(viewsets.ReadOnlyModelViewSet):

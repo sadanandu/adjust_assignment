@@ -13,8 +13,13 @@ class Dataset(models.Model):
     channel = models.CharField(max_length=200)
     country = models.CharField(max_length=200)
     os = models.CharField(max_length=200)
-    impressions = models.IntegerField()
-    clicks = models.IntegerField()
-    installs = models.IntegerField()
+    impressions = models.FloatField()
+    clicks = models.FloatField()
+    installs = models.FloatField()
     spend = models.FloatField()
     revenue = models.FloatField()
+
+    @property
+    def cpi(self):
+        return self.spend/self.installs
+    
