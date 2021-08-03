@@ -22,4 +22,5 @@ class Dataset(models.Model):
     @property
     def cpi(self):
         return self.spend/self.installs
+
     
